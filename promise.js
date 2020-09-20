@@ -8,16 +8,84 @@ const PromiseState = {
   Rejected: 'Rejected',
 };
 
-class Promise {
-  state = PromiseState.Pending;
+/**
+ * [[Resolve]](promise, x) Promise 解决过程
+ */
+function ResolvePromise(promise, x) {
+  // 如果 promise 和 x 指向同一对象，以 TypeError 为据因拒绝执行 promise
+  if (promise === x) {
+    throw TypeError('cannot exec promise, cause promise === x');
+  }
+  // x 为 Promise
+  // 如果 x 为 Promise ，则使 promise 接受 x 的状态
+  if (x[promiseSymbol] === 'promise') {
+    x.then(
+      value => {
+        promise.changeState(PromiseState.Fulfilled, value, changeAccess);
+      },
+      reason => {
+        promise.changeState(PromiseState.Rejected, reason, changeAccess);
+      }
+    );
+  }
 
+  // NOTE: 为了兼容符合Promise 规范的其他Promise实现
+  if (typeof x === 'function' || (typeof x === 'object' && x !== null)) {
+    let then;
+
+    try {
+      then = x.then;
+    } catch (error) {
+      // 如果取 x.then 的值时抛出错误 e ，则以 e 为据因拒绝 promise
+      promise.changeState(PromiseState.Rejected, error, changeAccess);
+    }
+
+    if (typeof then === 'function') {
+      let exected = false;
+
+      const resolvePromise = y => {
+        if (exected) {
+          return;
+        }
+        exected = true;
+        ResolvePromise(promise, y);
+      };
+
+      const rejectPromise = r => {
+        if (exected) {
+          return;
+        }
+        exected = true;
+        promise.changeState(PromiseState.Rejected, r, changeAccess);
+      };
+
+      try {
+        then.call(x, resolvePromise, rejectPromise);
+      } catch (error) {
+        if (exected) {
+          return;
+        }
+        promise.changeState(PromiseState.Rejected, error, changeAccess);
+      }
+    } else {
+      promise.changeState(PromiseState.Fulfilled, x, changeAccess);
+    }
+  }
+
+  promise.changeState(PromiseState.Fulfilled, x, changeAccess);
+}
+
+class Promise {
   thenCallbacks = [];
+
+  state = PromiseState.Pending;
 
   value = undefined;
 
   reason = undefined;
 
   timer = undefined;
+
   constructor(callback) {
     const resolve = value => {
       this.changeState(PromiseState.Fulfilled, value, changeAccess);
@@ -29,6 +97,7 @@ class Promise {
 
     callback(resolve, reject);
   }
+
   then(onFulfilled, onRejected) {
     const obj = {};
 
@@ -59,33 +128,24 @@ class Promise {
      */
     return obj.returnPromise;
   }
+
   changeState(state, value, access) {
+    if (this.state !== PromiseState.Pending) {
+      return;
+    }
+
     if (access !== changeAccess) {
       return;
     }
 
     switch (state) {
-      case PromiseState.Pending: {
-        return;
-      }
-
       case PromiseState.Fulfilled: {
-        Object.defineProperty(this, 'value', {
-          value: value,
-          writable: false,
-          enumerable: false,
-          configurable: false,
-        });
+        this.value = value;
         break;
       }
 
       case PromiseState.Rejected: {
-        Object.defineProperty(this, 'reason', {
-          value: value,
-          writable: false,
-          enumerable: false,
-          configurable: false,
-        });
+        this.reason = value;
         break;
       }
 
@@ -94,12 +154,7 @@ class Promise {
       }
     }
 
-    Object.defineProperty(this, 'state', {
-      value: state,
-      writable: false,
-      enumerable: false,
-      configurable: false,
-    });
+    this.state = state;
 
     this.exec();
   }
@@ -128,6 +183,7 @@ class Promise {
           }
         } else {
           // 如果 onRejected 不是函数且 promise1 拒绝执行， promise2 必须拒绝执行并返回相同的据因
+          // eslint-disable-next-line no-lonely-if
           if (!onRejected) {
             returnPromise.changeState(
               PromiseState.Rejected,
@@ -139,14 +195,15 @@ class Promise {
         }
 
         try {
-          const fn =
-            state === PromiseState.Fulfilled ? onFulfilled : onRejected;
-
-          // onFulfilled 和 onRejected 必须被作为函数调用（即没有 this 值）
-          const x = fn.call(undefined, immutableValue);
-
-          // 如果 onFulfilled 或者 onRejected 返回一个值 x ，则运行 Promise 解决过程：[[Resolve]](promise2, x)
-          ResolvePromise(returnPromise, x);
+          if (this.state === PromiseState.Fulfilled) {
+            const x = onFulfilled.call(undefined, this.value);
+            // 如果 onFulfilled 或者 onRejected 返回一个值 x ，则运行 Promise 解决过程：[[Resolve]](promise2, x)
+            ResolvePromise(returnPromise, x);
+          } else {
+            const x = onRejected.call(undefined, this.reason);
+            // 如果 onFulfilled 或者 onRejected 返回一个值 x ，则运行 Promise 解决过程：[[Resolve]](promise2, x)
+            ResolvePromise(returnPromise, x);
+          }
         } catch (err) {
           // 如果 onFulfilled 或者 onRejected 抛出一个异常 e ，则 promise2 必须拒绝执行，并返回拒因 e
           returnPromise.changeState(
@@ -166,69 +223,4 @@ Object.defineProperty(Promise, promiseSymbol, {
   value: 'promise',
 });
 
-/**
- * [[Resolve]](promise, x) Promise 解决过程
- */
-function ResolvePromise(promise, x) {
-  // 如果 promise 和 x 指向同一对象，以 TypeError 为据因拒绝执行 promise
-  if (promise === x) {
-    throw TypeError('cannot exec promise, cause promise === x');
-  }
-  // x 为 Promise
-  // 如果 x 为 Promise ，则使 promise 接受 x 的状态
-  if (x[promiseSymbol] === 'promise') {
-    x.then(
-      value => {
-        returnPromise.changeState(PromiseState.Fulfilled, value, changeAccess);
-      },
-      reason => {
-        returnPromise.changeState(PromiseState.Rejected, reason, changeAccess);
-      }
-    );
-  }
-
-  // NOTE: 为了兼容符合Promise 规范的其他Promise实现
-  if (typeof x === 'function' || (typeof x === 'object' && x !== null)) {
-    let then;
-
-    try {
-      then = x.then;
-    } catch (error) {
-      // 如果取 x.then 的值时抛出错误 e ，则以 e 为据因拒绝 promise
-      returnPromise.changeState(PromiseState.Rejected, error, changeAccess);
-    }
-
-    if (typeof then === 'function') {
-      let exected = false;
-
-      const resolvePromise = y => {
-        if (exected) {
-          return;
-        }
-        exected = true;
-        ResolvePromise(promise, y);
-      };
-
-      const rejectPromise = r => {
-        if (exected) {
-          return;
-        }
-        exected = true;
-        promise.changeState(PromiseState.Rejected, r, changeAccess);
-      };
-
-      try {
-        then.call(x, resolvePromise, rejectPromise);
-      } catch (error) {
-        if (exected) {
-          return;
-        }
-        returnPromise.changeState(PromiseState.Rejected, error, changeAccess);
-      }
-    } else {
-      returnPromise.changeState(PromiseState.Fulfilled, x, changeAccess);
-    }
-  }
-
-  returnPromise.changeState(PromiseState.Fulfilled, x, changeAccess);
-}
+module.exports = Promise;
