@@ -4,7 +4,8 @@
   "description": "Promise implementation",
   "main": "promise.js",
   "scripts": {
-    "test": "npx jest"
+    "lint": "npx eslint promise.js",
+    "test": "npx promises-aplus-tests promise.test-adapter.js"
   },
   "repository": {
     "type": "git",
@@ -19,7 +20,13 @@
     "url": "https://github.com/LiZ2z/Promise-A-Plus/issues"
   },
   "homepage": "https://github.com/LiZ2z/Promise-A-Plus#readme",
-  "dependencies": {
-    "jest": "^26.4.2"
+  "devDependencies": {
+    "eslint": "^7.9.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "prettier": "^2.1.2",
+    "promises-aplus-tests": "*"
   }
 }
