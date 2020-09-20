@@ -4,8 +4,8 @@
   "description": "Promise implementation",
   "main": "promise.js",
   "scripts": {
-    "lint": "npx eslint promise.js",
-    "test": "npx promises-aplus-tests promise.test-adapter.js"
+    "lint": "npx eslint promise.js --fix",
+    "test": "npx promises-aplus-tests promise.test-adapter.js --bail"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/LiZ2z/Promise-A-Plus#readme",
   "devDependencies": {
+    "babel-eslint": "^10.1.0",
     "eslint": "^7.9.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-config-prettier": "^6.11.0",
