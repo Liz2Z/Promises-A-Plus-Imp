@@ -1,4 +1,4 @@
-# Promise-A-Plus-Imp
+# Promises-A-Plus-Imp
 
 基于 [Promises/A+规范](https://promisesaplus.com/) 规范开发的 promise 库
 
