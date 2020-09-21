@@ -3,10 +3,11 @@ const promiseSymbol = Symbol('promise');
 
 // const changeAccess = Symbol('changeAccess');
 
+// A promise must be in one of three states: pending, fulfilled, or rejected.
 const PromiseState = {
-  Pending: 'Pending',
-  Fulfilled: 'Fulfilled',
-  Rejected: 'Rejected',
+  Pending: 'pending',
+  Fulfilled: 'fulfilled',
+  Rejected: 'rejected',
 };
 
 /**
@@ -89,8 +90,10 @@ class Promise {
 
   _state = PromiseState.Pending;
 
+  // “value” is any legal JavaScript value (including undefined, a thenable, or a promise).
   _value = undefined;
 
+  // “reason” is a value that indicates why a promise was rejected.
   _reason = undefined;
 
   constructor(callback) {
