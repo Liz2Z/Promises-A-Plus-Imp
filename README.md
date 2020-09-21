@@ -1,6 +1,6 @@
 # Promise-A-Plus-Imp
 
-基于 [Promise/A+规范](https://promisesaplus.com/) 规范开发的 promise 库
+基于 [Promises/A+规范](https://promisesaplus.com/) 规范开发的 promise 库
 
 ### 进度
 
