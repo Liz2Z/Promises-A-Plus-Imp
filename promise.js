@@ -202,6 +202,10 @@ class Promise {
             resolvePromise(returnPromise, x);
           }
         } catch (error) {
+          // 之前这里的参数传递错误，只通过80项测试：
+          // returnPromise._changeState(PromiseState.Rejected, this._reason);
+          // 修复为如下代码，通过220项测试
+          //
           // 如果 onFulfilled 或者 onRejected 抛出一个异常 e ，则 promise2 必须拒绝执行，并返回拒因 e
           returnPromise._changeState(PromiseState.Rejected, error);
         }
