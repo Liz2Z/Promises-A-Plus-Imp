@@ -1,5 +1,5 @@
 {
-  "name": "promise-a-plus",
+  "name": "promises-a-plus-imp",
   "version": "0.0.1",
   "description": "Promise implementation",
   "main": "promise.js",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LiZ2z/Promise-A-Plus.git"
+    "url": "git+https://github.com/LiZ2z/Promises-A-Plus-Imp.git"
   },
   "keywords": [
     "promise"
@@ -17,9 +17,9 @@
   "author": "L.S <fitz-i@foxmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/LiZ2z/Promise-A-Plus/issues"
+    "url": "https://github.com/LiZ2z/Promises-A-Plus-Imp/issues"
   },
-  "homepage": "https://github.com/LiZ2z/Promise-A-Plus#readme",
+  "homepage": "https://github.com/LiZ2z/Promises-A-Plus-Imp#readme",
   "devDependencies": {
     "babel-eslint": "^10.1.0",
     "eslint": "^7.9.0",
