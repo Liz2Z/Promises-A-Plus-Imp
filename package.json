@@ -12,7 +12,8 @@
     "url": "git+https://github.com/LiZ2z/Promises-A-Plus-Imp.git"
   },
   "keywords": [
-    "promise"
+    "promise",
+    "Promise/A+"
   ],
   "author": "L.S <fitz-i@foxmail.com>",
   "license": "MIT",
@@ -29,5 +30,8 @@
     "eslint-plugin-prettier": "^3.1.4",
     "prettier": "^2.1.2",
     "promises-aplus-tests": "*"
+  },
+  "engines": {
+    "node": "^12.8.4"
   }
 }
