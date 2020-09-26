@@ -1,4 +1,7 @@
 /* eslint-disable no-underscore-dangle */
+const promiseSymbol = Symbol('promise');
+
+// const changeAccess = Symbol('changeAccess');
 
 // A promise must be in one of three states: pending, fulfilled, or rejected.
 const PromiseState = {
@@ -6,6 +9,87 @@ const PromiseState = {
   Fulfilled: 'fulfilled',
   Rejected: 'rejected',
 };
+
+/**
+ * [[Resolve]](promise, x) Promise 解决过程
+ */
+function resolvePromise(promise, x) {
+  // 2.3.1 If promise and x refer to the same object, reject promise with a TypeError as the reason.
+  if (promise === x) {
+    throw TypeError('cannot resolve promise, cause promise === x');
+  }
+
+  // 💘：❌❌❌❌❌❌
+  // 如果 x 不是对象（null、undefined），这里就报错了
+
+  // 2.3.2 If x is a promise, adopt its state
+  if (x[promiseSymbol] === 'promise') {
+    // 2.3.2.1 If x is pending, promise must remain pending until x is fulfilled or rejected.
+    // 2.3.2.2 If/when x is fulfilled, fulfill promise with the same value.
+    // 2.3.2.3 If/when x is rejected, reject promise with the same reason.
+    x.then(
+      value => {
+        promise._changeState(PromiseState.Fulfilled, value);
+      },
+      reason => {
+        promise._changeState(PromiseState.Rejected, reason);
+      }
+    );
+    return;
+  }
+
+  // “thenable” is an object or function that defines a then method.
+  // x 为 “thenable” 时，
+  // NOTE: 为了兼容符合Promise 规范的其他Promise实现
+  if (typeof x === 'function' || (typeof x === 'object' && x !== null)) {
+    let then;
+
+    try {
+      then = x.then;
+    } catch (error) {
+      // 如果取 x.then 的值时抛出错误 e ，则以 e 为据因拒绝 promise
+      promise._changeState(PromiseState.Rejected, error);
+      return;
+    }
+
+    // .then属性指向的不是一个方法，则以 x为值 resolve promise
+    if (typeof then !== 'function') {
+      promise._changeState(PromiseState.Fulfilled, x);
+      return;
+    }
+
+    let exected = false;
+
+    const _resolvePromise = y => {
+      if (exected) {
+        return;
+      }
+      exected = true;
+      resolvePromise(promise, y);
+    };
+
+    const rejectPromise = r => {
+      if (exected) {
+        return;
+      }
+      exected = true;
+      promise._changeState(PromiseState.Rejected, r);
+    };
+
+    try {
+      then.call(x, _resolvePromise, rejectPromise);
+    } catch (error) {
+      if (exected) {
+        return;
+      }
+      promise._changeState(PromiseState.Rejected, error);
+    }
+    return;
+  }
+
+  // x 不是函数也不是对象，以 x 为值，resolve promise
+  promise._changeState(PromiseState.Fulfilled, x);
+}
 
 class Promise {
   _thenRecords = [];
@@ -120,97 +204,27 @@ class Promise {
           if (this._state === PromiseState.Fulfilled) {
             const x = onFulfilled.call(undefined, this._value);
             // 如果 onFulfilled 或者 onRejected 返回一个值 x ，则运行 Promise 解决过程：[[Resolve]](promise2, x)
-            Promise.resolvePromise(returnPromise, x);
+            resolvePromise(returnPromise, x);
           } else {
             const x = onRejected.call(undefined, this._reason);
             // 如果 onFulfilled 或者 onRejected 返回一个值 x ，则运行 Promise 解决过程：[[Resolve]](promise2, x)
-            Promise.resolvePromise(returnPromise, x);
+            resolvePromise(returnPromise, x);
           }
         } catch (error) {
+          // 之前这里的参数传递错误，只通过80项测试：
+          // returnPromise._changeState(PromiseState.Rejected, this._reason);
+          // 修复为如下代码，通过220项测试
+          //
           // 如果 onFulfilled 或者 onRejected 抛出一个异常 e ，则 promise2 必须拒绝执行，并返回拒因 e
           returnPromise._changeState(PromiseState.Rejected, error);
         }
       });
     }, 0);
   }
-
-  /**
-   * [[Resolve]](promise, x) Promise 解决过程
-   */
-  static resolvePromise(promise, x) {
-    // 2.3.1 If promise and x refer to the same object, reject promise with a TypeError as the reason.
-    if (promise === x) {
-      throw TypeError('cannot resolve promise, cause promise === x');
-    }
-
-    // 2.3.2 If x is a promise, adopt its state
-    if (x instanceof Promise) {
-      // 2.3.2.1 If x is pending, promise must remain pending until x is fulfilled or rejected.
-      // 2.3.2.2 If/when x is fulfilled, fulfill promise with the same value.
-      // 2.3.2.3 If/when x is rejected, reject promise with the same reason.
-      x.then(
-        value => {
-          promise._changeState(PromiseState.Fulfilled, value);
-        },
-        reason => {
-          promise._changeState(PromiseState.Rejected, reason);
-        }
-      );
-      return;
-    }
-
-    // “thenable” is an object or function that defines a then method.
-    // x 为 “thenable” 时，
-    // NOTE: 为了兼容符合Promise 规范的其他Promise实现
-    if (typeof x === 'function' || (typeof x === 'object' && x !== null)) {
-      let then;
-
-      try {
-        then = x.then;
-      } catch (error) {
-        // 如果取 x.then 的值时抛出错误 e ，则以 e 为据因拒绝 promise
-        promise._changeState(PromiseState.Rejected, error);
-        return;
-      }
-
-      // .then属性指向的不是一个方法，则以 x为值 resolve promise
-      if (typeof then !== 'function') {
-        promise._changeState(PromiseState.Fulfilled, x);
-        return;
-      }
-
-      let exected = false;
-
-      const _resolvePromise = y => {
-        if (exected) {
-          return;
-        }
-        exected = true;
-        Promise.resolvePromise(promise, y);
-      };
-
-      const rejectPromise = r => {
-        if (exected) {
-          return;
-        }
-        exected = true;
-        promise._changeState(PromiseState.Rejected, r);
-      };
-
-      try {
-        then.call(x, _resolvePromise, rejectPromise);
-      } catch (error) {
-        if (exected) {
-          return;
-        }
-        promise._changeState(PromiseState.Rejected, error);
-      }
-      return;
-    }
-
-    // x 不是函数也不是对象，以 x 为值，resolve promise
-    promise._changeState(PromiseState.Fulfilled, x);
-  }
 }
+
+Object.defineProperty(Promise, promiseSymbol, {
+  value: 'promise',
+});
 
 module.exports = Promise;
