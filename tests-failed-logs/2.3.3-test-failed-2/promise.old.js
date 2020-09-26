@@ -149,8 +149,14 @@ class Promise {
       // 2.3.2.3 If/when x is rejected, reject promise with the same reason.
       x.then(
         value => {
-          Promise.resolvePromise(promise, value);
-          // promise._changeState(PromiseState.Fulfilled, value);
+          // 💘：❌❌❌❌❌❌
+          // 这是错误的写法
+          promise._changeState(PromiseState.Fulfilled, value);
+          // 💘：❌❌❌❌❌❌
+
+          // 🚀： ✅✅✅✅✅✅
+          // Promise.resolvePromise(promise, value);
+          // 🚀： ✅✅✅✅✅✅
         },
         reason => {
           promise._changeState(PromiseState.Rejected, reason);
