@@ -7,7 +7,9 @@
 ### 错误日志
 
 ```javascript
-1) 2.2.6: `then` may be called multiple times on the same promise. 2.2.6.1: If/when `promise` is fulfilled, all respective `onFulfilled` callbacks must execute in the order of their originating calls to `then`. multiple boring fulfillment handlers already-fulfilled:
+1) 2.2.6: `then` may be called multiple times on the same promise.
+ 2.2.6.1: If/when `promise` is fulfilled, all respective `onFulfilled` callbacks must execute in the order of their originating calls to `then`.
+  multiple boring fulfillment handlers already-fulfilled:
      Error: timeout of 200ms exceeded. Ensure the done() callback is being called in this test.
       at Timeout.<anonymous> (E:\Promise-A-Plus\node_modules\mocha\lib\runnable.js:226:19)
       at listOnTimeout (internal/timers.js:531:17)

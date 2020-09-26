@@ -21,7 +21,7 @@ function resolvePromise(promise, x) {
 
   // 💘：❌❌❌❌❌❌
   // 如果 x 不是对象（null、undefined），这里就报错了
-
+  // 💘：❌❌❌❌❌❌
   // 2.3.2 If x is a promise, adopt its state
   if (x[promiseSymbol] === 'promise') {
     // 2.3.2.1 If x is pending, promise must remain pending until x is fulfilled or rejected.

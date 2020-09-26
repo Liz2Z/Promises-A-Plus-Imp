@@ -92,7 +92,9 @@ class Promise {
 
   reason = undefined;
 
+  // 💘：❌❌❌❌❌❌
   timer = undefined;
+  // 💘：❌❌❌❌❌❌
 
   constructor(callback) {
     const resolve = value => {
@@ -165,17 +167,22 @@ class Promise {
   }
 
   _exec() {
-    // onFulfilled 和 onRejected 只有在执行环境堆栈仅包含平台代码时才可被调用
+    // 💘：❌❌❌❌❌❌
+    // NOTE: 这里应该是个冗余操作，一个then就应该对应一个异步回调，
+    // 而不是自作聪明的批量处理
     if (this.timer !== undefined) {
       clearTimeout(this.timer);
       this.timer = undefined;
     }
+    // 💘：❌❌❌❌❌❌
 
     const callbacks = this.thenCallbacks;
     this.thenCallbacks = [];
 
     // onFulfilled 和 onRejected 只有在执行环境堆栈仅包含平台代码时才可被调用
+    // 💘：❌❌❌❌❌❌
     this.timer = setTimeout(() => {
+      // 💘：❌❌❌❌❌❌
       callbacks.forEach(obj => {
         const { onRejected, onFulfilled, returnPromise } = obj;
 
