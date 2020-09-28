@@ -81,7 +81,7 @@ function testCallingResolvePromise(yFactory, stringRepresentation, test) {
       function xFactory() {
         return {
           then: function (resolvePromise) {
-            // promise that is resolved with :
+            // yFactory() === promise that is resolved with :
             // {
             //    then: function (onFulfilled) {
             //      onFulfilled(sentinel);
